@@ -36,5 +36,6 @@ ncloud_api_url = https://fin-ncloud.apigw.fin-ntruss.com
 
 ## kubernetes dev tool
 - **Lens** :  https://k8slens.dev/
+- **Open Lens** : https://github.com/MuhammedKalkan/OpenLens/
 - **k9s** : https://k9scli.io/
 
