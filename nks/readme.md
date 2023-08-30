@@ -20,7 +20,7 @@ brew install ncp-iam-authenticator
 # profile : Sub Account의 Access Key, Secret Key에 매칭된 profile  
 ncp-iam-authenticator create-kubeconfig --region FKR --clusterUuid ad97cc94-43f9-4ecb-a916-************ --profile DEFAULT --output kubeconfig-dev.yaml --debug
 ```
-- **configure file***
+- **configure file**
 ```bash
 # ~/.ncloud/configure
 #[DEFAULT]
