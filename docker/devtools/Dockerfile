@@ -1,3 +1,4 @@
+#tbd5d1uh.private-ncr.fin-ntruss.com/k8s/dev/devops/dev-tools:0.0.7
 FROM ubuntu:20.04
 LABEL authors="devops"
 
@@ -27,6 +28,8 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     curl \
     wget \
+    iputils-ping \
+    sshpass \
     python3 \
     python3-pip \
     tree \
@@ -56,7 +59,6 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
 # Install Docker
 RUN apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
 
-
 RUN chsh -s $(which zsh)
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
@@ -72,6 +74,7 @@ RUN terraform --version
 # ansible install
 RUN python3 -m pip install ansible
 RUN ansible --version
+COPY ansible.cfg /root/.ansible
 
 # packer install
 RUN wget https://releases.hashicorp.com/packer/${PK_VERSION}/packer_${PK_VERSION}_linux_amd64.zip
