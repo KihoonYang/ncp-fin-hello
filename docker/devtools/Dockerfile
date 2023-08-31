@@ -43,7 +43,19 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     zsh \
     locales \
     fonts-powerline \
+    apt-transport-https \
+    ca-certificates \
+    gnupg-agent \
+    software-properties-common \
     && apt-get clean all
+
+# Add Docker’s official GPG key and repository:
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
+    && add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+# Install Docker
+RUN apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
+
 
 RUN chsh -s $(which zsh)
 RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
