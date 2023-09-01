@@ -1,6 +1,6 @@
 ---
 - name: servers
-  hosts: dev
+  hosts: all
   remote_user: swadmin
   tasks:
   - name: Example from an Ansible Playbook
