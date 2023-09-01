@@ -34,9 +34,11 @@ PLAY RECAP *********************************************************************
 ```
 
 > [!NOTE]  
-> export ANSIBLE_HOST_KEY_CHECKING=False
 ```bash
 fatal: [10.3.20.12]: FAILED! => {
     "msg": "Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host's fingerprint to your known_hosts file to manage this host."
 }
+```
+```bash
+export ANSIBLE_HOST_KEY_CHECKING=False
 ```
