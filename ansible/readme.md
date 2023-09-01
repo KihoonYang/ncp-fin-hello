@@ -33,7 +33,8 @@ PLAY RECAP *********************************************************************
 10.3.20.9                  : ok=2    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0
 ```
 
-> [!NOTE]  
+> [!NOTE]
+> Error Occurrence  
 ```bash
 fatal: [10.3.20.12]: FAILED! => {
     "msg": "Using a SSH password instead of a key is not possible because Host Key checking is enabled and sshpass does not support this.  Please add this host's fingerprint to your known_hosts file to manage this host."
