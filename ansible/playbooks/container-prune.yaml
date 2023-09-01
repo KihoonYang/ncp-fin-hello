@@ -1,0 +1,26 @@
+---
+- name: Prune Containerd Image
+  hosts: all
+  gather_facts: false
+  remote_user: root
+  tasks:
+    - name: Get Disk Usage Information
+      become: true
+      shell: "df -Th | grep '/var/lib/containerd"
+      register: disk_usage
+
+    - name: Display Disk Usage Information
+      debug:
+        msg:
+          - "Disk Usage Information:"
+          - "{{ disk_usage.stdout_lines }}"
+
+    - name: Execute Docker Prune
+      become: true
+      command: crictl rmi --prune
+
+    - name: Display Prune Result
+      debug:
+        msg:
+          - "Image Prune Result:"
+          - "{{ ansible_result.stdout }}"

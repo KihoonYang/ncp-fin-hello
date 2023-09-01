@@ -1,0 +1,12 @@
+[dev-was]
+10.3.40.6   # FEP-AP
+10.3.10.7   # OB-AP
+10.3.20.13  # MCI-AP
+10.3.20.14  # SSO/EAM-AP
+10.3.20.15  # REPORT-AP
+10.3.20.16  # EDMS-AP
+
+[dev-was:vars]
+ansible_user=swadmin
+ansible_password=*****
+ansible_port=2122

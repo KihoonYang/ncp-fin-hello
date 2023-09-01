@@ -1,0 +1,12 @@
+[dev-k8s]
+10.3.20.22
+10.3.20.23
+10.3.20.24
+10.3.20.34
+10.3.20.35
+10.3.20.36
+
+[dev-k8s:vars]
+ansible_user=kubeadm
+ansible_password=*****
+ansible_port=22

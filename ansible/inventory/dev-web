@@ -1,0 +1,9 @@
+[dev-web]
+10.3.20.9   # CHNL-WEB
+10.3.20.10  # SOlU-WEB
+10.3.20.12  # CORE-WEB
+
+[dev-web:vars]
+ansible_user=swadmin
+ansible_password=*****
+ansible_port=2122

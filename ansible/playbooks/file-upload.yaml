@@ -1,0 +1,14 @@
+---
+- name: "Script Start"
+  hosts: all
+  vars:
+     local_path: /home/devops/works/hro-devops-repository/IaC/ansible/work/files/sample
+     remote_path: /hro_app/sw/apm/pinpoint/2.5.2/profiles/
+  tasks:
+    - name: "Script Send"
+      copy:
+        src: "{{ local_path }}"
+        dest: "{{ remote_path }}"
+        owner: swadmin
+        group: hroco
+        mode: '0755'

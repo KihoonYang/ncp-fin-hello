@@ -75,6 +75,7 @@ RUN terraform --version
 RUN python3 -m pip install ansible
 RUN ansible --version
 COPY ansible.cfg /root/.ansible
+RUN export ANSIBLE_HOST_KEY_CHECKING=False
 
 # packer install
 RUN wget https://releases.hashicorp.com/packer/${PK_VERSION}/packer_${PK_VERSION}_linux_amd64.zip

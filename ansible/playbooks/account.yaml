@@ -1,0 +1,25 @@
+---
+- name: servers
+  hosts: all
+  remote_user: swadmin
+  tasks:
+    - name: Get User Account Information
+      become: true
+      shell: "awk -F':' '{ print $1 }' /etc/passwd"
+      register: user_accounts
+
+    - name: Check Password Expiry Date
+      become: true
+      shell: "chage --list {{ item }}"
+      register: password_expiry_date
+      with_items:
+        - "{{ user_accounts.stdout_lines }}"
+
+    - name: Display User Account Information and Password Expiry Date
+      debug:
+        msg:
+          - "User Account Information:"
+          - "{{ user_accounts.stdout_lines }}"
+          - ""
+          - "Password Expiry Date:"
+          - "{{ password_expiry_date.results | map(attribute='stdout_lines') | list }}"

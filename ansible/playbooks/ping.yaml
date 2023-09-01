@@ -1,0 +1,7 @@
+---
+- name: servers
+  hosts: dev
+  remote_user: swadmin
+  tasks:
+  - name: Example from an Ansible Playbook
+    ansible.builtin.ping:

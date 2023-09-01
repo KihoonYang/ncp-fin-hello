@@ -1,0 +1,16 @@
+---
+- name: Check Disk Usage
+  hosts: all
+  gather_facts: false
+  remote_user: swadmin
+  tasks:
+    - name: Get Disk Usage Information
+      become: true
+      shell: "df -Th"
+      register: disk_usage
+
+    - name: Display Disk Usage Information
+      debug:
+        msg:
+          - "Disk Usage Information:"
+          - "{{ disk_usage.stdout_lines }}"
