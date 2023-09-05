@@ -369,7 +369,7 @@ Apply complete! Resources: 9 added, 0 changed, 0 destroyed.
 
 
 ```bash
-# apply
+# destory
  ncp-fin-hello/terraform/dev> tf destory
  module.network.ncloud_vpc.main: Refreshing state... [id=21415]
 module.network.ncloud_subnet.main-public-subnets["web"]: Refreshing state... [id=33671]
