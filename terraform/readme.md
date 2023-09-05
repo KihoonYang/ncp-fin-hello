@@ -1,6 +1,6 @@
-## Terraform on NCP
+# Terraform on NCP
 
-# Install
+## Install
 ```bash
 # add brew package
 brew tap hashicorp/tap
@@ -14,12 +14,12 @@ Terraform v1.5.6
 on darwin_arm64
 ```
 
-# Set Alias
+## Set Alias
 ```bash
 alias tf=terraform
 ``` 
 
-# Check API Authentication
+## Check API Authentication
 > [!NOTE] settings
 > - NCP 콘솔 > 마이페이지 > 계정관리 > 인증키 관리 > API 인증키 관리
 > - terraform > dev > provider.tf > access_key / secret_key
@@ -28,7 +28,7 @@ Access Key ID : C2AF5118B2**********
 Secret Key : 7E92A25543BDE8696F4E2FA7D093BF**********
 ```
 
-# Example Useage
+## Example Useage
 ```bash
 # initialize
 ncp-fin-hello/terraform/dev> tf init
