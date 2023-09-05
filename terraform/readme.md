@@ -366,3 +366,177 @@ module.network.ncloud_subnet.main-private-subnets["db"]: Creation complete after
 
 Apply complete! Resources: 9 added, 0 changed, 0 destroyed.
 ```
+
+
+```bash
+# apply
+ ncp-fin-hello/terraform/dev> tf destory
+ module.network.ncloud_vpc.main: Refreshing state... [id=21415]
+module.network.ncloud_subnet.main-public-subnets["web"]: Refreshing state... [id=33671]
+module.network.ncloud_subnet.main-public-subnets["mgt"]: Refreshing state... [id=33672]
+module.network.ncloud_subnet.main-private-lb-subnets["pub"]: Refreshing state... [id=33676]
+module.network.ncloud_subnet.main-private-lb-subnets["pri"]: Refreshing state... [id=33674]
+module.network.ncloud_subnet.main-private-subnets["db"]: Refreshing state... [id=33677]
+module.network.ncloud_subnet.main-private-subnets["mgt"]: Refreshing state... [id=33675]
+module.network.ncloud_subnet.main-private-subnets["ap"]: Refreshing state... [id=33670]
+module.network.ncloud_subnet.main-private-subnets["fep"]: Refreshing state... [id=33673]
+
+Terraform used the selected providers to generate the following execution plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform will perform the following actions:
+
+  # module.network.ncloud_subnet.main-private-lb-subnets["pri"] will be destroyed
+  - resource "ncloud_subnet" "main-private-lb-subnets" {
+      - id             = "33674" -> null
+      - name           = "sn-hello-hro-dev-lb-pri" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.210.0/24" -> null
+      - subnet_no      = "33674" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "LOADB" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-private-lb-subnets["pub"] will be destroyed
+  - resource "ncloud_subnet" "main-private-lb-subnets" {
+      - id             = "33676" -> null
+      - name           = "sn-hello-hro-dev-lb-pub" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.200.0/24" -> null
+      - subnet_no      = "33676" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "LOADB" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-private-subnets["ap"] will be destroyed
+  - resource "ncloud_subnet" "main-private-subnets" {
+      - id             = "33670" -> null
+      - name           = "sn-hello-hro-dev-ap-pri" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.20.0/24" -> null
+      - subnet_no      = "33670" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-private-subnets["db"] will be destroyed
+  - resource "ncloud_subnet" "main-private-subnets" {
+      - id             = "33677" -> null
+      - name           = "sn-hello-hro-dev-db-pri" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.30.0/24" -> null
+      - subnet_no      = "33677" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-private-subnets["fep"] will be destroyed
+  - resource "ncloud_subnet" "main-private-subnets" {
+      - id             = "33673" -> null
+      - name           = "sn-hello-hro-dev-fep-pri" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.40.0/24" -> null
+      - subnet_no      = "33673" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-private-subnets["mgt"] will be destroyed
+  - resource "ncloud_subnet" "main-private-subnets" {
+      - id             = "33675" -> null
+      - name           = "sn-hello-hro-dev-mgt-pri" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.51.0/24" -> null
+      - subnet_no      = "33675" -> null
+      - subnet_type    = "PRIVATE" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-public-subnets["mgt"] will be destroyed
+  - resource "ncloud_subnet" "main-public-subnets" {
+      - id             = "33672" -> null
+      - name           = "sn-hello-hro-dev-mgt-pub" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.50.0/24" -> null
+      - subnet_no      = "33672" -> null
+      - subnet_type    = "PUBLIC" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_subnet.main-public-subnets["web"] will be destroyed
+  - resource "ncloud_subnet" "main-public-subnets" {
+      - id             = "33671" -> null
+      - name           = "sn-hello-hro-dev-web-pub" -> null
+      - network_acl_no = "27177" -> null
+      - subnet         = "10.3.10.0/24" -> null
+      - subnet_no      = "33671" -> null
+      - subnet_type    = "PUBLIC" -> null
+      - usage_type     = "GEN" -> null
+      - vpc_no         = "21415" -> null
+      - zone           = "FKR-1" -> null
+    }
+
+  # module.network.ncloud_vpc.main will be destroyed
+  - resource "ncloud_vpc" "main" {
+      - default_access_control_group_no = "41730" -> null
+      - default_network_acl_no          = "27177" -> null
+      - default_private_route_table_no  = "34554" -> null
+      - default_public_route_table_no   = "34553" -> null
+      - id                              = "21415" -> null
+      - ipv4_cidr_block                 = "10.3.0.0/16" -> null
+      - name                            = "vpc-hello-hro-dev" -> null
+      - vpc_no                          = "21415" -> null
+    }
+
+Plan: 0 to add, 0 to change, 9 to destroy.
+
+Do you really want to destroy all resources?
+  Terraform will destroy all your managed infrastructure, as shown above.
+  There is no undo. Only 'yes' will be accepted to confirm.
+
+  Enter a value: yes
+
+module.network.ncloud_subnet.main-public-subnets["web"]: Destroying... [id=33671]
+module.network.ncloud_subnet.main-private-lb-subnets["pub"]: Destroying... [id=33676]
+module.network.ncloud_subnet.main-private-lb-subnets["pri"]: Destroying... [id=33674]
+module.network.ncloud_subnet.main-private-subnets["db"]: Destroying... [id=33677]
+module.network.ncloud_subnet.main-private-subnets["fep"]: Destroying... [id=33673]
+module.network.ncloud_subnet.main-public-subnets["mgt"]: Destroying... [id=33672]
+module.network.ncloud_subnet.main-private-subnets["ap"]: Destroying... [id=33670]
+module.network.ncloud_subnet.main-private-subnets["mgt"]: Destroying... [id=33675]
+module.network.ncloud_subnet.main-public-subnets["mgt"]: Still destroying... [id=33672, 10s elapsed]
+module.network.ncloud_subnet.main-private-subnets["ap"]: Still destroying... [id=33670, 10s elapsed]
+module.network.ncloud_subnet.main-public-subnets["web"]: Still destroying... [id=33671, 10s elapsed]
+module.network.ncloud_subnet.main-private-subnets["db"]: Still destroying... [id=33677, 10s elapsed]
+module.network.ncloud_subnet.main-private-lb-subnets["pri"]: Still destroying... [id=33674, 10s elapsed]
+module.network.ncloud_subnet.main-private-subnets["mgt"]: Still destroying... [id=33675, 10s elapsed]
+module.network.ncloud_subnet.main-private-subnets["fep"]: Still destroying... [id=33673, 10s elapsed]
+module.network.ncloud_subnet.main-private-lb-subnets["pub"]: Still destroying... [id=33676, 10s elapsed]
+module.network.ncloud_subnet.main-private-lb-subnets["pub"]: Destruction complete after 12s
+module.network.ncloud_subnet.main-private-lb-subnets["pri"]: Destruction complete after 12s
+module.network.ncloud_subnet.main-private-subnets["ap"]: Destruction complete after 12s
+module.network.ncloud_subnet.main-private-subnets["db"]: Destruction complete after 12s
+module.network.ncloud_subnet.main-private-subnets["mgt"]: Destruction complete after 13s
+module.network.ncloud_subnet.main-private-subnets["fep"]: Destruction complete after 13s
+module.network.ncloud_subnet.main-public-subnets["web"]: Destruction complete after 13s
+module.network.ncloud_subnet.main-public-subnets["mgt"]: Destruction complete after 13s
+module.network.ncloud_vpc.main: Destroying... [id=21415]
+module.network.ncloud_vpc.main: Still destroying... [id=21415, 10s elapsed]
+module.network.ncloud_vpc.main: Destruction complete after 12s
+
+Destroy complete! Resources: 9 destroyed.
+ ```
