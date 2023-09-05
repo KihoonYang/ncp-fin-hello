@@ -1,0 +1,5 @@
+terraform/dev/.terraform.lock.hcl
+terraform/dev/.terraform/modules/modules.json
+terraform/dev/.terraform/providers/registry.terraform.io/navercloudplatform/ncloud/2.3.18/darwin_arm64
+terraform/dev/terraform.tfstate
+terraform/dev/terraform.tfstate.backup
