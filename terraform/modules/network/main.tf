@@ -41,3 +41,12 @@ resource "ncloud_subnet" "main-private-lb-subnets" {
   subnet_type    = "PRIVATE"
   usage_type     = "LOADB"
 }
+
+/**
+resource "ncloud_lb" "main-private-lb" {
+  name            = "lb-${var.APP_NAME}-${var.ENV}"
+  network_type    = "PRIVATE"
+  type            = "NETWORK_PROXY"
+  subnet_no_list  = [ncloud_subnet.test.subnet_no]
+}
+**/

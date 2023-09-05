@@ -7,7 +7,6 @@ module "network" {
   ZONE     = var.ZONE
 }
 
-
 # Security(ACG)
 module "security" {
   depends_on = [module.network]
@@ -32,24 +31,6 @@ module "compute" {
   APP_NAME      = var.APP_NAME
   ENV           = var.ENV
   ZONE          = var.ZONE
-}
-
-# NKS ( to-do nks acg )
-module "nks" {
-  depends_on = [module.security]
-  source     = "../modules/nks"
-
-  VPC_ID               = module.network.main-vpc-id
-  CLUSTER_TYPE         = local.CLUSTER_TYPE
-  K8S_VERSION          = local.K8S_VERSION
-  LB_PRIVATE_SUBNET_NO = module.network.private-lb-subnets
-  SUBNET_NO_LIST       = module.network.subnet-private
-  LOGIN_KEY_NAME       = local.LOGIN_KEY_NAME
-  APP_NAME             = var.APP_NAME
-  NODE_POOLS           = local.NODE_POOLS
-  ENV                  = var.ENV
-  ZONE                 = var.ZONE
-  LOG_AUDIT            = local.LOG_AUDIT
 }
 
 # STORAGE(Block Storage, NAS)
