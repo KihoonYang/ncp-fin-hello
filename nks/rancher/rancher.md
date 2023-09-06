@@ -26,3 +26,8 @@ helm install rancher rancher-latest/rancher \
   --set replicas=1 \
   --set bootstrapPassword=Devops
 ```
+
+## Check Install
+- CoreDNS 설정
+- hosts File 수정
+- Login
