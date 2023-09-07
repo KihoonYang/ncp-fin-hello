@@ -1,6 +1,6 @@
 # RANCHER
 
-## reference
+## Reference
 https://ranchermanager.docs.rancher.com/getting-started/quick-start-guides/deploy-rancher-manager/helm-cli
 
 ## Install
@@ -27,7 +27,66 @@ helm install rancher rancher-latest/rancher \
   --set bootstrapPassword=Devops
 ```
 
-## Check Install
-- CoreDNS 설정
-- hosts File 수정
-- Login
+## After Install
+- Set CoreDNS
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nodelocaldns
+  namespace: kube-system
+data:
+  Corefile: |
+    ...
+    .:53 {
+        errors
+        cache 30
+        reload
+        loop
+        bind 169.254.25.10
+        forward . /etc/resolv.conf
+        prometheus :9253
+
+        hosts {
+          103.244.x.y rancher.hello.io
+
+          fallthrough
+        }
+    }
+```
+- Add hosts ( /etc/hosts )
+```
+103.244.x.y rancher.hello.io
+```
+
+> [!WARNING]
+> Occur **404** Nginx Error @ rancher.hello.io
+> check `ingress-nginx-nginx-ingress-controller` pod log
+```log
+"Ignoring ingress because of error while validating ingress class" ingress="cattle-system/rancher" error="ingress does not contain a valid IngressClass"
+```
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rancher
+  namespace: cattle-system
+spec:
+  ingressClassName: nginx # add ingreeClass
+  tls:
+    - hosts:
+        - rancher.hello.io
+      secretName: tls-rancher-ingress
+  rules:
+    - host: rancher.hello.io
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: rancher
+                port:
+                  number: 80
+```
+

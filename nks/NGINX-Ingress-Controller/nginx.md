@@ -1,11 +1,15 @@
 # NGINX Ingress Controller
 
-## reference
+## Reference
 https://bitnami.com/stack/nginx-ingress-controller/helm
 
 ## Install
 ```bash
-helm install ingress-nginx oci://registry-1.docker.io/bitnamicharts/nginx-ingress-controller  --namespace ingress-nginx --create-namespace --version 9.8.0 --wait
+helm install ingress-nginx oci://registry-1.docker.io/bitnamicharts/nginx-ingress-controller  \
+    --namespace ingress-nginx \
+    --create-namespace \
+    --version 9.8.0 \
+    --wait
 ```
 
 > [!NOTE]  
