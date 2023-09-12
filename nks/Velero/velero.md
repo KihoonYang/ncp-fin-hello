@@ -7,7 +7,7 @@ https://guide-fin.ncloud-docs.com/docs/k8s-k8suse-velero
 ```bash
 # Velero Client
 cd /tmp
-wget https://github.com/vmware-tanzu/velero/releases/download/v1.10.3/velero-v1.11.1-linux-arm64.tar.gz
+wget https://github.com/vmware-tanzu/velero/releases/download/v1.11.1/velero-v1.11.1-linux-arm64.tar.gz
 tar -xvzf velero-v1.11.1-linux-arm64.tar.gz
 sudo mv velero-v1.11.1-linux-arm64/velero /usr/local/bin/velero
 
