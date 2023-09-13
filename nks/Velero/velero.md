@@ -23,10 +23,11 @@ server_api_uri=https://fin-ncloud.apigw.fin-ntruss.com/vserver/v2
 
 
 # Velero Server
-velero install --provider velero.io/aws \
-  --bucket hro-d-nks-backup --image velero/velero:v1.8.1 \
-  --plugins velero/velero-plugin-for-aws:v1.7.0,velero/velero-plugin-for-csi:v0.1.0 \
+  velero install \
+  --provider velero.io/aws \
+  --bucket hro-d-nks-backup \
+  --plugins velero/velero-plugin-for-aws:v1.6.2,nks.private-ncr.fin-ntruss.com/velero-plugin-for-ncloud:v0.0.7 \
   --backup-location-config region=kr-standard,s3ForcePathStyle="true",s3Url=https://kr.object.private.fin-ncloudstorage.com \
-  --features=EnableCSI --backup-location-config region=FKR --snapshot-location-config region=FKR \
-  --use-volume-snapshots=true --secret-file=./cloud-credential
+  --use-volume-snapshots=false \
+  --secret-file=./cloud-credential
 ```

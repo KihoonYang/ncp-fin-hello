@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-ns-weekly-mon-2300
+  namespace: velero
+  labels:
+    velero.backup.period: weekly
+spec:
+  schedule: 0 23 *  *  1
+  concurrencyPolicy: Allow
+  suspend: false
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      labels:
+        velero.backup.period: weekly
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+            - name: velero-backup
+              image: tbd5d1uh.private-ncr.fin-ntruss.com/k8s/dev/devops/dev:v2
+              command:
+                - /bin/sh
+                - '-c'
+                - >
+
+                  for target_ns in $(kubectl get ns -l
+                  velero.backup.period=weekly -o name | cut -d "/" -f 2)
+
+                  do
+                    num_backup=$(velero backup get -l ns=$target_ns | sed 1d | wc -l);
+                    num_keep_backup=$(kubectl get ns $target_ns -o "jsonpath={.metadata.labels['velero\.backup\.keep']}")
+                    num_delete=$(( num_backup - num_keep_backup + 1 ))
+                    
+                    echo "===" $target_ns "keeps" $num_keep_backup ", has " $num_backup " backups ==="
+                    if [ $num_delete -ge 0 ]
+                    then
+                      for backup_name in $(velero backup get -l ns=$target_ns | sed 1d | head -$num_delete | cut -d' ' -f 1)
+                      do
+                        echo "Deleting old backup :" $backup_name
+                        velero delete backup $backup_name --confirm
+                      done
+                    fi
+                    echo "=== Create backup in " $target_ns "===="
+                    velero backup create $target_ns-$(date +%F-%H%M%S) --include-namespaces=$target_ns --labels ns=$target_ns --labels velero.backup.period=weekly
+                  done
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: Always
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          serviceAccountName: velero
+          serviceAccount: velero
+          securityContext: {}
+          schedulerName: default-scheduler
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+
+---
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sonarqube
+  labels:
+    velero.backup.keep: '2'
+    velero.backup.period: weekly
+spec:
+  finalizers:
+    - kubernetes
