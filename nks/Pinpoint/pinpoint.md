@@ -14,7 +14,7 @@ helm install pinpoint . -n monitoring-system
 
 
 > [!IMPORTANT]
-> In server(pinpoint-collector), `Header size exceeded max allowed size` error occurs.
+> **istio** In server(pinpoint-collector), `Header size exceeded max allowed size` error occurs.
 > collector의 이미지를 변경해야한다.(2.5.2 -> 2.5.2.1)
 
 **reference**
