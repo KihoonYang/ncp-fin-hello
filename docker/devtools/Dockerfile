@@ -59,9 +59,6 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
 # Install Docker
 RUN apt-get update && apt-get install -y docker-ce docker-ce-cli containerd.io
 
-RUN chsh -s $(which zsh)
-RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
-
 RUN mkdir -p /home/${UNAME}/base
 
 # terraform install
@@ -111,10 +108,19 @@ RUN aws configure set aws_access_key_id ${ACCESS_KEY_ID} --profile default \
     && aws configure set output json
 RUN aws --endpoint-url=https://kr.object.fin-ncloudstorage.com s3api list-buckets
 
-#RUN echo "export HISTCONTROL=ignoredups:erasedups" >> ~/.bashrc
-#RUN echo "export HISTSIZE=10000" >> ~/.bashrc
-#RUN echo "export HISTFILESIZE=10000" >> ~/.bashrc
-#RUN echo "shopt -s histappend" >> ~/.bashrc
+
+# Install zsh & plugins
+RUN chsh -s $(which zsh)
+RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+RUN git clone https://github.com/zsh-users/zsh-autosuggestions ~/.zsh/zsh-autosuggestions
+RUN git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.zsh/zsh-syntax-highlighting
+RUN git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/.zsh/powerlevel10k
+
+RUN echo 'source ~/.zsh/powerlevel10k/powerlevel10k.zsh-theme' >>~/.zshrc
+RUN echo 'source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh' >>~/.zshrc
+RUN echo 'source ~/.zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh' >>~/.zshrc
+
 
 WORKDIR /home/${UNAME}
 
