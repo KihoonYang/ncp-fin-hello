@@ -1,0 +1,46 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: generate-build-id
+  namespace: devops-pipelines
+  labels:
+    app.kubernetes.io/version: "0.1"
+  annotations:
+    tekton.dev/pipelines.minVersion: "0.12.1"
+    tekton.dev/categories: Build Tools
+    tekton.dev/tags: build-tool
+    tekton.dev/displayName: "buildid"
+    tekton.dev/platforms: "linux/amd64,linux/s390x,linux/ppc64le,linux/arm64"
+spec:
+  description: >-
+    Given a base version, this task generates a unique build id by appending the
+    base-version to the current timestamp.
+  params:
+    - description: Base product version
+      name: base-version
+      type: string
+  results:
+    - description: Current timestamp
+      name: timestamp
+      type: string
+    - description: ID of the current build
+      name: build-id
+      type: string
+  steps:
+    - computeResources: {}
+      image: docker.io/library/bash:5.0.18@sha256:879f94a9da53dc064779e7a68339aecd60a9028ff884cacaa47ae752ca690404 #tag: 5.0.18
+      name: get-timestamp
+      script: |
+        #!/usr/bin/env bash
+        ts=`TZ=UTC-9 date "+%y%m%d-%H%M%S"`
+        echo "Current Timestamp: ${ts}"
+        echo ${ts} | tr -d "\n" | tee $(results.timestamp.path)
+    - computeResources: {}
+      image: docker.io/library/bash:5.0.18@sha256:879f94a9da53dc064779e7a68339aecd60a9028ff884cacaa47ae752ca690404 #tag: 5.0.18
+      name: get-buildid
+      script: |
+        #!/usr/bin/env bash
+        ts=`cat $(results.timestamp.path)`
+        id=`echo $RANDOM | md5sum | head -c 8`
+        buildId=$(inputs.params.base-version)-${ts}-${id}
+        echo ${buildId} | tr -d "\n" | tee $(results.build-id.path)
