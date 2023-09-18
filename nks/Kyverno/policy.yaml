@@ -1,0 +1,50 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:update-pods
+  labels:
+    app.kubernetes.io/component: background-controller
+    app.kubernetes.io/instance: kyverno
+    app.kubernetes.io/part-of: kyverno
+rules:
+  - verbs:
+      - patch
+      - update
+    apiGroups:
+      - ''
+    resources:
+      - pods
+
+---      
+
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: resize-pod-policy
+spec:
+  mutateExistingOnPolicyUpdate: false
+  rules:
+    - name: resize-pod-policy
+      match:
+        any:
+          - resources: # (1)
+              kinds:
+                - Pod/status
+                - Pod
+      preconditions: 
+        all: # (2)
+          - key: "{{request.object.status.containerStatuses[0].ready}}"
+            operator: Equals
+            value: true
+      mutate:
+        targets:
+          - apiVersion: v1
+            kind: Pod
+            name: "{{request.object.metadata.name}}"
+        patchStrategicMerge:
+          spec:
+            containers:
+              - (name): sample-kotlin-spring # (3)
+                resources:
+                  limits:
+                    cpu: 0.5 # (4)
