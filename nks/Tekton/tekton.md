@@ -22,7 +22,8 @@ kubectl apply -f https://storage.googleapis.com/tekton-releases/operator/previou
 kubectl apply --filename https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
 ```
 
-> [!IMPORTANT] admission webhook "rancher.cattle.io.namespaces" denied the request: Unauthorized
+> [!IMPORTANT] 
+> admission webhook "rancher.cattle.io.namespaces" denied the request: Unauthorized
 ```bash
 # modify culterrole / clusterrolebinding
 ref: https://github.com/rancher/rancher/issues/41191

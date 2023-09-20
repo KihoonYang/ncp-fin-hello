@@ -2,6 +2,7 @@
 
 ## Reference
 https://artifacthub.io/packages/helm/gitlab/gitlab
+https://docs.gitlab.com/charts/installation/deployment.html
 
 ## Install
 ```bash
@@ -59,3 +60,23 @@ data:
 - gitlab-gitlab-initial-root-password
 
 ## Install GitLab Runner
+
+
+## Upgrade
+```bash
+helm get values gitlab > gitlab.yaml
+
+helm upgrade gitlab gitlab/gitlab \
+  --version <new version> \
+  -f gitlab.yaml \
+  --set gitlab.migrations.enabled=true \
+  --set ...
+```
+> [!IMPORTANT] 
+> install, upgrade 후, HPA 내용을 확인하고 적정한 수준으로 조정이 필요하다.
+
+> [!NOTE]
+> GitLab의 해당 repository에서 commit/push event가 발생하면 원격지 백업 Repository에 동일한 Branch로 소스가 반영된다.
+> Repository > Settings > Repository > Mirroing repositories > Add new
+> ex) https://{userid}@mirrorsite-url/repo
+
