@@ -1,0 +1,352 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: dev-app-core-com-backend-template
+  namespace: devops-pipelines
+spec:
+  params:
+    - description: The git revision
+      name: gitrevision
+    - description: The git repository url
+      name: gitrepositoryurl
+    - description: The git username
+      name: gitusername
+    - description: The project name
+      name: project-name
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: dev-app-core-com-backend-pipeline-
+        labels:
+          app: devops
+          build-stage: dev
+      spec:
+        params:
+          - name: build-stage
+            value: dev
+          - name: git-url
+            value: $(tt.params.gitrepositoryurl)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: git-username
+            value: $(tt.params.gitusername)
+          - name: clone-to-directory
+            value: $(tt.params.gitrevision)
+          - name: image-url
+            value: >-
+              hi-hello.private-ncr.fin-ntruss.com/app/dev/core/$(tt.params.project-name)
+          - name: spring-profile
+            value: dev,redis
+          - name: gitops-url
+            value: >-
+              https://hello-0000000.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+          - name: gitops-revision
+            value: dev
+          - name: gitops-path
+            value: app/core/$(tt.params.project-name)/dev
+          - name: rollout-strategy
+            value: rolling
+          - name: deploy-manifest
+            value: kustomization.yaml
+          - name: sonar-project-key
+            value: core-com-api-dev
+          - name: pipelinerun-name
+            value: $(context.pipelineRun.name)
+          - name: mm-channel
+            value: core:$(tt.params.project-name)
+        pipelineRef:
+          name: pl-app-core-com-backend
+        serviceAccountName: sa-pipeline-runner
+        workspaces:
+          - name: source
+            persistentvolumeclaim:
+              claimName: pvc-app-core-$(tt.params.project-name)
+          - emptyDir: {}
+            name: gitops
+          - emptyDir: {}
+            name: manifest-dir
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: test-app-core-com-backend-template
+  namespace: devops-pipelines
+spec:
+  params:
+    - description: The git revision
+      name: gitrevision
+    - description: The git repository url
+      name: gitrepositoryurl
+    - description: The git username
+      name: gitusername
+    - description: The project name
+      name: project-name
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: test-app-core-com-backend-pipeline-
+        labels:
+          app: devops
+          build-stage: test
+      spec:
+        params:
+          - name: build-stage
+            value: test
+          - name: git-url
+            value: $(tt.params.gitrepositoryurl)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: git-username
+            value: $(tt.params.gitusername)
+          - name: clone-to-directory
+            value: $(tt.params.gitrevision)
+          - name: image-url
+            value: >-
+              hi-hello.private-ncr.fin-ntruss.com/app/test/core/$(tt.params.project-name)
+          - name: spring-profile
+            value: test,redis
+          - name: gitops-url
+            value: >-
+              https://hello-0000000.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+          - name: gitops-revision
+            value: test
+          - name: gitops-path
+            value: app/core/$(tt.params.project-name)/test
+          - name: rollout-strategy
+            value: rolling
+          - name: deploy-manifest
+            value: kustomization.yaml
+          - name: pipelinerun-name
+            value: $(context.pipelineRun.name)
+          - name: mm-channel
+            value: core:$(tt.params.project-name)
+        pipelineRef:
+          name: pl-app-core-com-backend-approval
+        serviceAccountName: sa-pipeline-runner
+        workspaces:
+          - name: source
+            persistentvolumeclaim:
+              claimName: pvc-app-core-$(tt.params.project-name)
+          - emptyDir: {}
+            name: gitops
+          - emptyDir: {}
+            name: manifest-dir
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: prd-build-app-core-com-backend-template
+  namespace: devops-pipelines
+spec:
+  params:
+    - description: The git revision
+      name: gitrevision
+    - description: The git repository url
+      name: gitrepositoryurl
+    - description: The git username
+      name: gitusername
+    - description: The git project name
+      name: project-name
+    - description: The last commit message
+      name: commit-message
+    - name: merge-title
+    - name: merge-description
+    - name: merge-date
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: prd-build-app-core-com-backend-pipeline-
+        labels:
+          app: devops
+          build-stage: prd
+      spec:
+        params:
+          - name: build-stage
+            value: prd
+          - name: git-url
+            value: $(tt.params.gitrepositoryurl)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: git-username
+            value: $(tt.params.gitusername)
+          - name: clone-to-directory
+            value: $(tt.params.gitrevision)
+          - name: image-url
+            value: >-
+              hi-hello.private-ncr.fin-ntruss.com/app/prd/core/$(tt.params.project-name)
+          - name: spring-profile
+            value: prd,redis
+          - name: red-project-name
+            value: $(tt.params.project-name)
+          - name: red-issue-tracker
+            value: '1'
+          - name: application-name
+            value: core-com-api
+          - name: last-commit-message
+            value: $(tt.params.commit-message)
+          - name: merge-title
+            value: $(tt.params.merge-title)
+          - name: merge-description
+            value: $(tt.params.merge-description)
+          - name: merge-date
+            value: $(tt.params.merge-date)
+          - name: pipelinerun-name
+            value: $(context.pipelineRun.name)
+          - name: pipeline-name
+            value: $(context.pipeline.name)
+          - name: mm-channel
+            value: core:$(tt.params.project-name)
+        pipelineRef:
+          name: pl-app-core-com-backend-build
+        serviceAccountName: sa-pipeline-runner
+        workspaces:
+          - name: source
+            persistentvolumeclaim:
+              claimName: pvc-app-core-$(tt.params.project-name)
+          - emptyDir: {}
+            name: manifest-dir
+          - name: hro-redmine-config
+            secret:
+              secretName: hro-redmine-config
+          - name: hro-tekton-logs
+            persistentvolumeclaim:
+              claimName: pvc-hro-tekton-logs
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: prd-mattermost-app-core-com-backend-template
+  namespace: devops-pipelines
+spec:
+  params:
+    - name: build-id
+    - name: gitrevision
+    - name: rollout-strategy
+    - description: The mattermost username
+      name: mattermost-username
+    - description: The mattermost team
+      name: mattermost-team
+    - description: The mattermost channel
+      name: mattermost-channel
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: prd-mattermost-app-core-com-backend-pipeline-
+        labels:
+          app: devops
+          build-stage: prd
+      spec:
+        params:
+          - name: username
+            value: $(tt.params.mattermost-username)
+          - name: image-url
+            value: >-
+              hi-hello.private-ncr.fin-ntruss.com/app/prd/core/$(tt.params.mattermost-channel)
+          - name: build-id
+            value: $(tt.params.build-id)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: gitops-url
+            value: >-
+              https://hello-0000000.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+          - name: gitops-revision
+            value: main
+          - name: gitops-path
+            value: app/core/$(tt.params.mattermost-channel)/main
+          - name: gitops-revision-dr
+            value: dr
+          - name: gitops-path-dr
+            value: app/core/$(tt.params.mattermost-channel)/dr
+          - name: rollout-strategy
+            value: $(tt.params.rollout-strategy)
+          - name: deploy-manifest
+            value: kustomization.yaml
+          - name: pipelinerun-name
+            value: $(context.pipelineRun.name)
+          - name: pipeline-name
+            value: $(context.pipeline.name)
+          - name: mm-channel
+            value: $(tt.params.mattermost-team):$(tt.params.mattermost-channel)
+        pipelineRef:
+          name: pl-app-core-com-backend-deploy
+        serviceAccountName: sa-pipeline-runner
+        workspaces:
+          - emptyDir: {}
+            name: gitops
+          - name: hro-tekton-logs
+            persistentvolumeclaim:
+              claimName: pvc-hro-tekton-logs
+
+---
+
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: prd-redmine-app-core-com-backend-template
+  namespace: devops-pipelines
+spec:
+  params:
+    - name: image-url
+    - name: build-id
+    - name: gitrevision
+    - name: rollout-strategy
+    - name: red-username
+    - name: red-project-name
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: prd-redmine-app-core-com-backend-pipeline-
+        labels:
+          app: devops
+          build-stage: prd
+      spec:
+        params:
+          - name: username
+            value: $(tt.params.red-username)
+          - name: image-url
+            value: $(tt.params.image-url)
+          - name: build-id
+            value: $(tt.params.build-id)
+          - name: git-revision
+            value: $(tt.params.gitrevision)
+          - name: gitops-url
+            value: >-
+              https://hello-0000000.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+          - name: gitops-revision
+            value: main
+          - name: gitops-path
+            value: app/core/$(tt.params.red-project-name)/main
+          - name: gitops-revision-dr
+            value: dr
+          - name: gitops-path-dr
+            value: app/core/$(tt.params.red-project-name)/dr
+          - name: rollout-strategy
+            value: $(tt.params.rollout-strategy)
+          - name: deploy-manifest
+            value: kustomization.yaml
+          - name: pipelinerun-name
+            value: $(context.pipelineRun.name)
+          - name: pipeline-name
+            value: $(context.pipeline.name)
+          - name: mm-channel
+            value: core:$(tt.params.red-project-name)
+        pipelineRef:
+          name: pl-app-core-com-backend-deploy
+        serviceAccountName: sa-pipeline-runner
+        workspaces:
+          - emptyDir: {}
+            name: gitops
+          - name: hro-tekton-logs
+            persistentvolumeclaim:
+              claimName: pvc-hro-tekton-logs

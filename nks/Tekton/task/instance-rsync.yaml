@@ -1,0 +1,38 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: vm-rsync
+  namespace: devops-pipelines
+spec:
+  description: This task can be used to synchronize local and remote files.
+  params:
+    - name: local-path
+      type: string
+    - name: remote-path
+      type: string
+    - name: remote-ip
+      type: string
+    - default: ''
+      name: exclude-path
+      type: string
+  stepTemplate:
+    computeResources: {}
+    envFrom:
+      - secretRef:
+          name: hro-rsync-auth
+  steps:
+    - computeResources: {}
+      image: hi-hello.private-ncr.fin-ntruss.com/k8s/dev/devops/rsync-sshpass:hero
+      name: rsync
+      script: >
+        #mkdir ./exclude
+
+        #mv $(params.exclude-path) ./exclude/
+
+        sshpass -p $password rsync -azvh --exclude='.*' $(params.exclude-path)
+        -e "ssh -o StrictHostKeyChecking=no -p2122" ./
+        $username@$(params.remote-ip):$(params.remote-path)/
+      workingDir: $(workspaces.source.path)/$(params.local-path)
+  workspaces:
+    - description: The directory you want to sync.
+      name: source

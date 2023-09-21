@@ -1,0 +1,61 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: redmine-issue
+  namespace: devops-pipelines
+spec:
+  description: Create approval issue in redmine
+  params:
+    - name: red-project-name
+      type: string
+    - name: red-issue-subject
+      type: string
+    - name: red-issue-tracker
+      type: string
+    - name: last-commit-message
+      type: string
+    - default: noimage
+      name: image-url
+      type: string
+    - default: notag
+      name: build-id
+      type: string
+    - name: git-username
+      type: string
+    - name: merge-date
+      type: string
+    - name: merge-title
+      type: string
+    - name: merge-description
+      type: string
+    - name: merge-commit-sha
+      type: string
+  steps:
+    - computeResources: {}
+      image: hi-hello.private-ncr.fin-ntruss.com/k8s/dev/devops/red-cli:hero
+      name: redmine-create-issue
+      script: >
+        cp $(workspaces.hro-redmine-config.path)/.redmine.conf
+        "$HOME"/.redmine.conf
+
+
+        redmine create \
+          --status 1 \
+          --tracker $(params.red-issue-tracker) \
+          --project "$(params.red-project-name)" \
+          --priority 3 \
+          --subject "$(params.red-issue-subject) REQUEST DEPLOY" \
+          --description "[Image]: $(params.image-url) $(params.build-id) 
+        [Merge-Commit-Sha]: $(params.merge-commit-sha) 
+
+        [Merge-Title]: $(params.merge-title) 
+
+        [Merge-Description]: $(params.merge-description) 
+
+        [Last-Commit-Message]: $(params.last-commit-message) 
+
+        [Merge-Date]: $(params.merge-date) 
+
+        [Merged-By]: $(params.git-username)" 
+  workspaces:
+    - name: hro-redmine-config

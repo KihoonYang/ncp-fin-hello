@@ -31,3 +31,6 @@ ref: https://github.com/rancher/rancher/issues/41191
 # OR delete CRD
 kubectl delete ValidatingWebhookConfiguration rancher.cattle.io
 ```
+
+## Approval Task
+https://github.com/automatiko-io/automatiko-approval-task

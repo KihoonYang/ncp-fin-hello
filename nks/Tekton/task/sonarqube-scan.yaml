@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: sonarqube-scan
+  namespace: devops-pipelines
+spec:
+  description: >-
+    The following task can be used to perform static analysis on the source code
+    provided the SonarQube server is hosted
+
+    SonarQube is the leading tool for continuously inspecting the Code Quality
+    and Security of your codebases, all while empowering development teams.
+    Analyze over 25 popular programming languages including C#, VB.Net,
+    JavaScript, TypeScript and C++. It detects bugs, vulnerabilities and code
+    smells across project branches and pull requests.
+  params:
+    - default: https://sonarqube.hello.io
+      description: SonarQube server URL
+      name: SONAR_HOST_URL
+      type: string
+    - description: Project's unique key
+      name: SONAR_PROJECT_KEY
+      type: string
+    - description: Comma-separated paths to directories containing main source files
+      name: SOURCE_TO_SCAN
+      type: string
+    - default: hi-hello.private-ncr.fin-ntruss.com/k8s/dev/devops/sonar-cli:v4.6
+      description: The sonarqube scanner CLI image which will run the scan
+      name: SONAR_SCANNER_IMAGE
+      type: string
+  stepTemplate:
+    computeResources: {}
+    envFrom:
+      - secretRef:
+          name: hro-sonarqube-loginkey
+  steps:
+    - computeResources: {}
+      image: $(params.SONAR_SCANNER_IMAGE)
+      name: sonar-scan
+      script: |
+        #!/usr/bin/env sh
+        export SONAR_SCANNER_OPTS="-Xmx1G"
+        set -xe
+        sonar-scanner -Dsonar.projectKey=$(params.SONAR_PROJECT_KEY) \
+        -Dsonar.host.url=$(params.SONAR_HOST_URL) -Dsonar.login=$loginkey \
+        -Dsonar.sources=. -Dsonar.java.binaries=.
+  workspaces:
+    - description: Workspace containing the code which needs to be scanned by SonarQube
+      name: source

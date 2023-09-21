@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: clean-workspace
+  namespace: devops-pipelines
+spec:
+  description: This Task will clean git clone output Workspace.
+  params:
+    - description: Subdirectory inside the `output` Workspace with cloned data
+      name: subdirectory
+      type: string
+  steps:
+    - computeResources: {}
+      image: tbd5d1uh.private-ncr.fin-ntruss.com/k8s/dev/devops/alpine/git:v2.40.1
+      name: clean
+      script: |
+        #!/usr/bin/env sh
+        set -eu
+        set -x
+
+        CHECKOUT_DIR="$(workspaces.output.path)/$(params.subdirectory)"
+
+        if [ -d "${CHECKOUT_DIR}" ] 
+        then 
+           rm -rf ${CHECKOUT_DIR}
+        fi
+  workspaces:
+    - description: The workspace with git cloned output
+      name: output

@@ -1,0 +1,199 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: el-app-core-com-backend-listener
+  namespace: devops-pipelines
+spec:
+  namespaceSelector: {}
+  resources: {}
+  serviceAccountName: sa-pipeline-trigger
+  triggers:
+    - bindings:
+        - kind: TriggerBinding
+          ref: dev-app-core-com-backend-binding
+      interceptors:
+        - name: 'CEL filter: dev branch only'
+          params:
+            - name: filter
+              value: body.ref in ['refs/heads/dev']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: dev-trigger
+      template:
+        ref: dev-app-core-com-backend-template
+    - bindings:
+        - kind: TriggerBinding
+          ref: test-app-core-com-backend-binding
+      interceptors:
+        - name: 'CEL filter: merge request only'
+          params:
+            - name: filter
+              value: body.object_kind in ['merge_request']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge from dev branch only'
+          params:
+            - name: filter
+              value: body.object_attributes.source_branch in ['dev']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge to test branch'
+          params:
+            - name: filter
+              value: body.object_attributes.target_branch in ['test']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge action only'
+          params:
+            - name: filter
+              value: body.object_attributes.action in ['merge']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: test-trigger
+      template:
+        ref: test-app-core-com-backend-template
+    - bindings:
+        - kind: TriggerBinding
+          ref: prd-build-app-core-com-backend-binding
+      interceptors:
+        - name: 'CEL filter: merge request only'
+          params:
+            - name: filter
+              value: body.object_kind in ['merge_request']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge from test branch only'
+          params:
+            - name: filter
+              value: body.object_attributes.source_branch in ['test']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge to main branch only'
+          params:
+            - name: filter
+              value: body.object_attributes.target_branch in ['main']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: merge action only'
+          params:
+            - name: filter
+              value: body.object_attributes.action in ['merge']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: prd-build-trigger
+      template:
+        ref: prd-build-app-core-com-backend-template
+    - bindings:
+        - kind: TriggerBinding
+          ref: prd-redmine-app-core-com-backend-binding
+      interceptors:
+        - name: 'CEL filter: redmine tracker'
+          params:
+            - name: filter
+              value: body.payload.issue.tracker.name in ['Backend 배포 승인']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: redmine status'
+          params:
+            - name: filter
+              value: body.payload.issue.status.name.split('-')[1] in ['Approved']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get rollout-strategy'
+          params:
+            - name: overlays
+              value:
+                - expression: body.payload.issue.status.name.split('-')[2]
+                  key: rollout-strategy
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get image-url'
+          params:
+            - name: overlays
+              value:
+                - expression: body.payload.issue.description.split(' ')[1]
+                  key: image-url
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get build-id'
+          params:
+            - name: overlays
+              value:
+                - expression: body.payload.issue.description.split(' ')[2]
+                  key: build-id
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get gitrevision'
+          params:
+            - name: overlays
+              value:
+                - expression: body.payload.issue.description.split(' ')[4]
+                  key: gitrevision
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: prd-redmine-trigger
+      template:
+        ref: prd-redmine-app-core-com-backend-template
+    - bindings:
+        - kind: TriggerBinding
+          ref: prd-mattermost-app-core-com-backend-binding
+      interceptors:
+        - name: 'CEL filter: mattermost team'
+          params:
+            - name: filter
+              value: body.team_domain in ['core']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL filter: mattermost channel'
+          params:
+            - name: filter
+              value: body.channel_name in ['hro-com-backend']
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get build-id'
+          params:
+            - name: overlays
+              value:
+                - expression: body.text.split(' ')[1]
+                  key: build-id
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get gitrevision'
+          params:
+            - name: overlays
+              value:
+                - expression: body.text.split(' ')[2]
+                  key: gitrevision
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+        - name: 'CEL overlay: get rollout-strategy'
+          params:
+            - name: overlays
+              value:
+                - expression: body.text.split(' ')[3]
+                  key: rollout-strategy
+          ref:
+            kind: ClusterInterceptor
+            name: cel
+      name: prd-mattermost-trigger
+      template:
+        ref: prd-mattermost-app-core-com-backend-template

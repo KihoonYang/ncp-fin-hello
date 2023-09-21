@@ -1,0 +1,145 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: trivy-scan
+  namespace: devops-pipelines
+spec:
+  description: >-
+    Trivy is a simple and comprehensive scanner for vulnerabilities in container
+    images,file systems ,and Git repositories, as well as for configuration
+    issues.
+
+    This task can be used to scan for vulnenrabilities on the source code in
+    stand alone mode.
+  params:
+    - default: image --exit-code 0
+      description: The Arguments to be passed to Trivy command.
+      name: ARGS
+      type: string
+    - default: >-
+        hi-hello.private-ncr.fin-ntruss.com/k8s/dev/devops/aquasec/trivy:0.44.1-23.8.11
+      description: Trivy scanner image to be used
+      name: TRIVY_IMAGE
+      type: string
+    - description: Image or Path to be scanned by trivy.
+      name: IMAGE
+      type: string
+    - default: 'true'
+      description: a flag enabling Air-Gapped mode
+      name: AIR_GAPPED_ENABLED
+      type: string
+  steps:
+    - args:
+        - $(params.ARGS)
+      computeResources: {}
+      image: $(params.TRIVY_IMAGE)
+      name: trivy-scan
+      script: |
+        #!/usr/bin/env sh
+          cmd="trivy $* --skip-db-update --skip-java-db-update "
+          cmd="${cmd}$(params.IMAGE)"
+          echo "Running trivy task with command below"
+          echo "$cmd"
+          eval "$cmd"
+      workingDir: $(workspaces.manifest-dir.path)
+  workspaces:
+    - name: manifest-dir
+
+---
+
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: trivy-task
+  namespace: devops-pipelines
+spec:
+  params:
+    - description: 'e.g., trivy image {CMD}'
+      name: CMD
+      type: string
+    - default: $(params.APP_NAME)
+      description: 'e.g., xpt-service-{APP_NAME}-api-service'
+      name: APP_NAME
+      type: string
+    - default: $(tasks.generate-build-id.results.build-id)
+      description: 'e.g., latest/1.1.469'
+      name: BUILD_ID
+      type: string
+    - default: $(params.DEPLOY)
+      description: 'e.g., dev, prd'
+      name: DEPLOY
+      type: string
+    - default: ''
+      description: GitLab Project ID Code
+      name: PROJECT_ID
+      type: string
+  results:
+    - description: report-result
+      name: report-contents
+  steps:
+    - env:
+        - name: NEXUS_USER
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: nexus-auth-secret
+        - name: NEXUS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: nexus-auth-secret
+        - name: NEXUS_REGISTRY
+          valueFrom:
+            secretKeyRef:
+              key: registry
+              name: nexus-auth-secret
+      image: 'docker.io/aquasec/trivy:0.35.0'
+      name: command
+      resources: {}
+      script: >
+        #!/usr/bin/env sh
+
+        export TRIVY_USERNAME=$NEXUS_USER
+
+        export TRIVY_PASSWORD=$NEXUS_PASSWORD
+
+        export TRIVY_NON_SSL=true
+
+        export TRIVY_INSECURE=true 
+
+        export TRIVY_AUTH_URL=$NEXUS_REGISTRY
+
+        trivy image --format template --template "@contrib/html.tpl" -o
+        $(workspaces.source.path)/$(params.APP_NAME).html $(params.CMD)
+    - env:
+        - name: GITLAB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: .private-token
+              name: gitlab-auth-secret
+      image: 'docker.io/badouralix/curl-jq:latest'
+      name: report
+      resources: {}
+      script: >
+        GITLAB_UPLOAD_FILE=$(curl -X POST --form
+        'file=@$(workspaces.source.path)/$(params.APP_NAME).html' -H
+        PRIVATE-TOKEN:${GITLAB_TOKEN}
+        http://gilab.hello.io/api/v4/projects/$(params.PROJECT_ID)/uploads
+        | jq .markdown)
+
+        echo -n ' {
+          "title": "$(params.DEPLOY)-$(params.APP_NAME)-$(params.BUILD_ID)",
+          "labels": "vulnerability",
+          "description": ' > $(workspaces.source.path)/$(params.APP_NAME).json 
+
+        echo $GITLAB_UPLOAD_FILE >>
+        $(workspaces.source.path)/$(params.APP_NAME).json 
+
+        echo -n '}' >> $(workspaces.source.path)/$(params.APP_NAME).json 
+
+        curl -d @$(workspaces.source.path)/$(params.APP_NAME).json -X POST
+        http://gitlab.hello.io/api/v4/projects/$(params.PROJECT_ID)/issues
+        -H Content-Type:application/json -H PRIVATE-TOKEN:${GITLAB_TOKEN}
+      workingDir: $(workspaces.source.path)
+  workspaces:
+    - name: source

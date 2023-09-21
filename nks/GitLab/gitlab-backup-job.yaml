@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gitlab-backup-job
+  namespace: gitlab
+data:
+  run-backup.sh: |-
+    #!/bin/bash
+    kubectl -n gitlab exec -i -c toolbox \
+      $( kubectl get pod -n gitlab -l app=toolbox --no-headers -o custom-columns=":metadata.name" ) \
+      -- /bin/sh <<EOF
+      aws configure set aws_access_key_id B8706A69B7********** --profile default \
+      && aws configure set aws_secret_access_key 7C48BD41C67993AD8B693A6B335EFB********** --profile default \
+      && aws configure set region kr-standard --profile default \
+      && aws configure set output "json" --profile default
+      export BACKUP_BUCKET_NAME=hro-d-devops-gitlab-backups
+      backup-utility --s3tool awscli --aws-s3-endpoint-url https://kr.object.private.fin-ncloudstorage.com --aws-region kr-standard
+    EOF

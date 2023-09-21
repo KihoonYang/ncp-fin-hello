@@ -1,4 +1,4 @@
-#tbd5d1uh.private-ncr.fin-ntruss.com/k8s/dev/devops/dev-tools:0.0.7
+#hi-hello.private-ncr.fin-ntruss.com/k8s/dev/devops/dev-tools:0.0.7
 FROM ubuntu:20.04
 LABEL authors="devops"
 

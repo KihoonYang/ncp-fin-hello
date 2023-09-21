@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  name: dev-app-core-com-backend-pipeline-6dz7n
+  namespace: devops-pipelines
+spec:
+  params:
+    - name: build-stage
+      value: dev
+    - name: git-url
+      value: https://gitlab.hello.io/app/core/hro-com-backend.git
+    - name: git-revision
+      value: cccf6ec58dd7966d29ee3a9a1bc5825f0dcf1c3f
+    - name: git-username
+      value: '9000523'
+    - name: clone-to-directory
+      value: cccf6ec58dd7966d29ee3a9a1bc5825f0dcf1c3f
+    - name: image-url
+      value: hi-hello.private-ncr.fin-ntruss.com/app/dev/core/hro-com-backend
+    - name: spring-profile
+      value: dev,redis
+    - name: gitops-url
+      value: >-
+        https://hi-hello.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+    - name: gitops-revision
+      value: dev
+    - name: gitops-path
+      value: app/core/hro-com-backend/dev
+    - name: rollout-strategy
+      value: rolling
+    - name: deploy-manifest
+      value: kustomization.yaml
+    - name: sonar-project-key
+      value: core-com-api-dev
+    - name: pipelinerun-name
+      value: $(context.pipelineRun.name)
+    - name: mm-channel
+      value: core:hro-com-backend
+  pipelineRef:
+    name: pl-app-core-com-backend
+  taskRunTemplate:
+    serviceAccountName: sa-pipeline-runner
+  timeouts:
+    pipeline: 2h0m0s
+  workspaces:
+    - name: source
+      persistentVolumeClaim:
+        claimName: pvc-app-core-hro-com-backend
+    - emptyDir: {}
+      name: gitops
+    - emptyDir: {}
+      name: manifest-dir

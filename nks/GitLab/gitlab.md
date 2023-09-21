@@ -62,6 +62,10 @@ data:
 ## Install GitLab Runner
 
 
+
+
+
+
 ## Upgrade
 ```bash
 helm get values gitlab > gitlab.yaml
