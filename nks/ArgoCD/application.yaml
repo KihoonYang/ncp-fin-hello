@@ -1,0 +1,17 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: core-com-api-dev
+  namespace: argo-system
+spec:
+  destination:
+    namespace: ns-app-core-dev
+    server: https://kubernetes.default.svc
+  project: hro-apps
+  source:
+    path: app/core/hro-com-backend/dev
+    repoURL: >-
+      https://hi-hello.devtools.fin-ncloud.com/0000000/hro-apps-repository.git
+    targetRevision: dev
+  syncPolicy:
+    automated: {}

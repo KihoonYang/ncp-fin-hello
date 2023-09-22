@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: hro-apps
+  namespace: argo-system
+spec:
+  clusterResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  destinations:
+    - name: '*'
+      namespace: '*'
+      server: https://kubernetes.default.svc
+    - name: '*'
+      namespace: '*'
+      server: https://e303df86-0242-4789-94c3-xxxxxxxxxx.fkr.nks.fin-ntruss.com
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
