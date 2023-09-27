@@ -4,9 +4,7 @@ metadata:
   name: logging-dev
 spec:
   controlNamespace: elastic-system
-  fluentd:
-    logLevel: debug
-
+  
 ---
 
 apiVersion: logging.banzaicloud.io/v1beta1
@@ -14,19 +12,7 @@ kind: FluentbitAgent
 metadata:
   name: logging-dev
 spec:
-  bufferStorage:
-    storage.checksum: 'off'
-    storage.path: /buffer
-    storage.sync: normal
-  bufferStorageVolume:
-    hostPath:
-      path: /fluentbit/buffer
   customParsers: |
-    [PARSER]
-        Name hero-log-parser
-        Format regex
-        Regex ^\[(?<time>[^ ].*)\]\[(?<pid>[^ ]*)\]\s+(?<type>[A-Z]+)\s+(?<app>([a-z].*))\s+\[(?<code>[0-9]{2,4})\]-\[(?<message>.*)
-        Time_key time
     [MULTILINE_PARSER]
         name          hero-multiline-parser
         type          regex
@@ -40,24 +26,14 @@ spec:
       readOnly: true
       source: /hro/nas_dev
   inputTail:
-    Exclude_Path: >-
-      /hro/nas_dev/dev/hro_app/core-com-api-dev/log/*.*.log
-    Mem_Buf_Limit: 100MB
     Path: >-
-      /hro/nas_dev/dev/hro_app/core-com-api-dev/log/*.log
+      /hro/nas_dev/dev/hro_app/core-com-api-dev/log/*.log,
+      /hro/nas_dev/test/hro_app/core-com-api-test/log/*.log
     Path_Key: filename
     multiline.parser:
       - java
       - hero-multiline-parser
-    storage.type: filesystem
   logLevel: debug
-  positiondb:
-    hostPath:
-      path: /fluentbit/position
-  resources:
-    limits:
-      cpu: 500m
-      memory: 1500M
 
 ---
 
@@ -132,20 +108,44 @@ spec:
         parse:
           expression: >-
             ^\[(?<time>[^ ].*)\]\[(?<pid>[^
-            ]*)\]\s+(?<type>[A-Z]+)\s+([a-z]|\.)*[A-Z]\w+\s+\.*\[\d*\]-\[(?<app>\w+-\w+-\w+),(?<traceid>\w*)\]-(?<message>.*)
+            ]*)\]\s+(?<type>[A-Z]+)\s+([a-z]|\.)*[A-Z]\w+\s+\.*\[\d*\]-\[(?<app>\w+-\w+-\w+,)(?<traceid>.\w*),(?<ptxid>.*)\]-(?<message>.*)
           type: regexp
         reserve_data: true
         reserve_time: true
     - record_transformer:
+        enable_ruby: true
         records:
-          - stage: dev
-    - grep:
-        and:
-          - regexp:
-              - key: app
-                pattern: /hro-com-backend/
-              - key: pid
-                pattern: /-8070-/
+          - stage: ${if record['pid'].include? "-8070-"; "dev" ;else; "unknown" end;}
   globalOutputRefs:
     - co-core-com-api-dev-es
     - co-core-com-api-dev-s3
+
+---
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterFlow
+metadata:
+  name: cf-core-com-api-test
+  namespace: elastic-system
+spec:
+  filters:
+    - detectExceptions:
+        multiline_flush_interval: '1'
+    - parser:
+        key_name: log
+        parse:
+          expression: >-
+            ^\[(?<time>[^ ].*)\]\[(?<pid>[^
+            ]*)\]\s+(?<type>[A-Z]+)\s+([a-z]|\.)*[A-Z]\w+\s+\.*\[\d*\]-\[(?<app>\w+-\w+-\w+,)(?<traceid>.\w*),(?<ptxid>.*)\]-(?<message>.*)
+          type: regexp
+        reserve_data: true
+        reserve_time: true
+    - record_transformer:
+        enable_ruby: true
+        records:
+          - stage: >-
+              ${if record['pid'].include? "-8080-"; "test" ;else; "unknown"
+              end;}
+  globalOutputRefs:
+    - co-core-com-api-test-es
+    - co-core-com-api-test-s3
