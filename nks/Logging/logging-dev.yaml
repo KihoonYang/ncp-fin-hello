@@ -104,48 +104,13 @@ spec:
     - detectExceptions:
         multiline_flush_interval: '1'
     - parser:
-        key_name: log
         parse:
-          expression: >-
-            ^\[(?<time>[^ ].*)\]\[(?<pid>[^
-            ]*)\]\s+(?<type>[A-Z]+)\s+([a-z]|\.)*[A-Z]\w+\s+\.*\[\d*\]-\[(?<app>\w+-\w+-\w+,)(?<traceid>.\w*),(?<ptxid>.*)\]-(?<message>.*)
-          type: regexp
-        reserve_data: true
+          type: multi_format
+          patterns:
+          - format: regexp
+            expression: ^\[(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}:\d*)\] \[(?<stag>\S*)\] \[(?<thread>\S*)\]\s+(?<type>(INFO |WARN |ERROR|DEBUG))\s(?<logger>\S*)\s+\[(?<line>\d*)\]-\[(?<app>.*),(?<traceid>.*),(?<ptxid>.*)\]-(?<message>.*)
+        remove_key_name_field: true
         reserve_time: true
-    - record_transformer:
-        enable_ruby: true
-        records:
-          - stage: ${if record['pid'].include? "-8070-"; "dev" ;else; "unknown" end;}
   globalOutputRefs:
     - co-core-com-api-dev-es
     - co-core-com-api-dev-s3
-
----
-
-apiVersion: logging.banzaicloud.io/v1beta1
-kind: ClusterFlow
-metadata:
-  name: cf-core-com-api-test
-  namespace: elastic-system
-spec:
-  filters:
-    - detectExceptions:
-        multiline_flush_interval: '1'
-    - parser:
-        key_name: log
-        parse:
-          expression: >-
-            ^\[(?<time>[^ ].*)\]\[(?<pid>[^
-            ]*)\]\s+(?<type>[A-Z]+)\s+([a-z]|\.)*[A-Z]\w+\s+\.*\[\d*\]-\[(?<app>\w+-\w+-\w+,)(?<traceid>.\w*),(?<ptxid>.*)\]-(?<message>.*)
-          type: regexp
-        reserve_data: true
-        reserve_time: true
-    - record_transformer:
-        enable_ruby: true
-        records:
-          - stage: >-
-              ${if record['pid'].include? "-8080-"; "test" ;else; "unknown"
-              end;}
-  globalOutputRefs:
-    - co-core-com-api-test-es
-    - co-core-com-api-test-s3
