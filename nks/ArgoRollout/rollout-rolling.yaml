@@ -1,0 +1,163 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: core-com-api-dev
+  namespace: ns-app-core-dev
+spec:
+#  replicas: 0
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      hro: core-com-api-dev
+      stage: dev
+  template:
+    metadata:
+      labels:
+        hro: core-com-api-dev
+        stage: dev
+        tier: backend
+      annotations:
+        sidecar.istio.io/rewriteAppHTTPProbers: "true"
+        sidecar.istio.io/inject: 'true'
+        sidecar.istio.io/proxyCPU: '100m'
+        sidecar.istio.io/proxyMemory: '256Mi'
+        sidecar.istio.io/proxyCPULimit: '150m'
+        sidecar.istio.io/proxyMemoryLimit: '256Mi'
+        proxy.istio.io/config: |
+          holdApplicationUntilProxyStarts: true
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: hro
+                  operator: In
+                  values:
+                  - core-com-api-dev
+              topologyKey: "kubernetes.io/hostname"
+      imagePullSecrets:
+        - name: hero-reg
+      volumes:
+        - name: scouter-agent-conf
+          configMap:
+            name: scouter-agent-conf
+        - name: scouter-host-conf
+          configMap:
+            name: scouter-host-conf
+        - name: hro-app
+          nfs:
+            server: 169.254.0.xxx
+            path: /n0000000_nkshrod/hro/dev/hro_app
+        - name: hro-ncrm-share
+          nfs:
+            server: 169.254.0.xxx
+            path: /n0000000_nkshrod/hro/dev/hro_app/core-com-ncrm-dev/SHARE
+        - name: hro-attachment
+          nfs:
+            server: 169.254.0.xxx
+            path: /n0000000_nkshrod/hro/dev/hro_attachment
+      terminationGracePeriodSeconds: 60
+      initContainers:
+        - name: nas-init
+          image: tbd5d1uh.private-ncr.fin-ntruss.com/busybox:latest
+          command: ["bin/sh", "-c", "chown -R 2003:2000 /hro_app;"]
+          volumeMounts:
+            - name: hro-app
+              mountPath: /hro_app
+      containers:
+        - name: core-com-api-dev
+          image: tbd5d1uh.private-ncr.fin-ntruss.com/app/dev/core/hro-com-backend:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 2003
+            privileged: false
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "300m"
+            limits:
+              memory: "1Gi"
+#              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /com/api/health/liveness
+              port: 8070
+            initialDelaySeconds: 150
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /com/api/health/readiness
+              port: 8070
+            initialDelaySeconds: 150
+            periodSeconds: 10
+            timeoutSeconds: 5
+          lifecycle:
+            postStart:
+              exec:
+                command: ["sh", "-c", "echo hro-application"]
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 60;"]
+          volumeMounts:
+            - name: scouter-agent-conf
+              mountPath: /hro_app/sw/apm/scouter.conf
+              subPath: scouter.conf
+              readOnly: true
+            - name: scouter-host-conf
+              mountPath: /usr/local/scouter/agent.host/conf/scouter.conf
+              subPath: scouter.conf
+              readOnly: true
+            - name: hro-app
+              mountPath: /hro_app/
+            - name: hro-attachment
+              mountPath: /hro_attachment/
+            - name: hro-ncrm-share
+              mountPath: /hro_ncrm_share/
+          envFrom:
+            - secretRef:
+                name: scr-core-fwk-dev
+            - secretRef:
+                name: scr-core-com-dev
+          env:
+            - name: TZ
+              value: Asia/Seoul
+            - name: SPRING_PROFILES_ACTIVE
+              value: dev,redis
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: WORKLOAD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['rollouts-pod-template-hash']
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: JAVA_TOOL_OPTIONS
+              value: >-
+                -Dsun.net.http.allowRestrictedHeaders=true
+                -javaagent:/hro_app/sw/apm/scouter/2.17.1/scouter-agent-java-2.17.1.jar
+                -Dscouter.config=/hro_app/sw/apm/scouter/2.17.1/scouter.conf
+                -Dobj_name=$(POD_NAME)
+                -Dadd-opensjava.base/java.lang=ALL-UNNAMED
+                -Djdk.attach.allowAttachSelf=true
+                -javaagent:/hro_app/sw/apm/pinpoint/2.5.2/pinpoint-bootstrap-2.5.2.jar
+                -Dpinpoint.applicationName=core-com-api-dev
+                -Dpinpoint.agentName=core-com-api-dev
+                -Dpinpoint.agentId=$(WORKLOAD_NAME)-$(POD_IP)
+                -XX:+UseContainerSupport
+                -XX:InitialRAMPercentage=50.0
+                -XX:MinRAMPercentage=50.0
+                -XX:MaxRAMPercentage=70.0
+  strategy:
+    canary:
+      maxSurge: 25%
+      maxUnavailable: 0
