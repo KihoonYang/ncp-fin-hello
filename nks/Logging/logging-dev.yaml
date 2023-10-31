@@ -4,6 +4,9 @@ metadata:
   name: logging-dev
 spec:
   controlNamespace: elastic-system
+  fluentd:
+    logLevel: debug
+
   
 ---
 
@@ -17,58 +20,92 @@ spec:
         name          hero-multiline-parser
         type          regex
         flush_timeout 1000
-        rule      "start_state"   "/^\[\d{4}-\d{2}-\d{2}\s+.*/"                         "cont"
-        rule      "cont"          "^(\s+|\||[0-9]).*"                                   "cont"
+        rule      "start_state"   "^\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}:\d*)\]"    "cont"
+        rule      "cont"          "^(\s+|[0-9]).*"                                      "cont"
         rule      "cont"          "^$"                                                  "cont"
+        rule      "cont"          "^\|.*$"                                              "cont"
         rule      "cont"          "^}$"                                                 "cont"
+    [MULTILINE_PARSER]
+        name          hero-pipline-parser
+        type          regex
+        flush_timeout 1000
+        rule      "start_state"   "^.*"                         "cont"
+        rule      "cont"          "^.*$"                        "cont"
   extraVolumeMounts:
     - destination: /hro/nas_dev
       readOnly: true
       source: /hro/nas_dev
   inputTail:
+    Exclude_Path: >-
+      /hro/nas_dev/dev/hro_app/core-com-api-dev/log/*.*.log,
+      /hro/nas_dev/dev/hro_app/core-ccm-api-dev/log/*.*.log,
+      /hro/nas_dev/test/hro_app/channel-prmadm-api-test/log/*.*.log
+    Ignore_Older: 3d
     Path: >-
+      /var/log/containers/*.log,
       /hro/nas_dev/dev/hro_app/core-com-api-dev/log/*.log,
-      /hro/nas_dev/test/hro_app/core-com-api-test/log/*.log
-    Path_Key: filename
+      /hro/nas_dev/dev/hro_app/core-ccm-api-dev/log/*.log,
+      /hro/nas_dev/dev/hro_app/core-smv-api-dev/log/*.log
+    Path_Key: full_filename
     multiline.parser:
-      - java
       - hero-multiline-parser
+      - hero-pipline-parser
   logLevel: debug
+  resources:
+    limits:
+      memory: 1Gi
 
 ---
 
 apiVersion: logging.banzaicloud.io/v1beta1
 kind: ClusterOutput
 metadata:
-  name: co-core-com-api-dev-es
+  name: co-app-channel-hmp-api-dev-es
   namespace: elastic-system
 spec:
   elasticsearch:
+    application_name: app-channel-hmp-api-dev
     buffer:
       timekey: 1m
       timekey_use_utc: true
       timekey_wait: 30s
+    data_stream_enable: true
+    data_stream_name: app-channel-hmp-api-dev-stream
+    enable_ilm: true
     host: elasticsearch-master.elastic-system.svc.cluster.local
+    ilm_policy: >-
+      {"policy": {"phases": {"hot": {"min_age": "0ms","actions": {"rollover":
+      {"max_age": "30d","max_primary_shard_size": "50gb"},"set_priority":
+      {"priority": 100}}},"warm": {"min_age": "6d","actions": {"set_priority":
+      {"priority": 50}}},"cold": {"min_age": "21d","actions": {"set_priority":
+      {"priority": 0}}},"delete": {"min_age": "30d","actions": {"delete":
+      {"delete_searchable_snapshot": true}}}}}}
+    ilm_policy_id: hro-app-dev
     include_timestamp: true
-    index_name: app-core-com-api-dev
+    index_date_pattern: YYYY-MM-DD
+    index_name: app-channel-hmp-api-dev
+    logstash_format: false
     password:
       valueFrom:
         secretKeyRef:
           key: password
           name: elasticsearch-master-credentials
     port: 9200
+    rollover_index: true
     scheme: https
     ssl_verify: false
     ssl_version: TLSv1_2
     suppress_type_name: true
     user: elastic
+    verify_es_version_at_startup: true
+
 
 ---
 
 apiVersion: logging.banzaicloud.io/v1beta1
 kind: ClusterOutput
 metadata:
-  name: co-core-com-api-dev-s3
+  name: co-app-channel-hmp-api-dev-s3
   namespace: elastic-system
 spec:
   s3:
@@ -88,7 +125,7 @@ spec:
       timekey_wait: 30s
     force_path_style: 'true'
     path: '%Y/%m/%d/${tag}'
-    s3_bucket: hro-d-core-com-api
+    s3_bucket: hro-d-app-channel-hmp-api
     s3_endpoint: https://kr.object.private.fin-ncloudstorage.com
     s3_region: kr-standard
 
@@ -97,20 +134,67 @@ spec:
 apiVersion: logging.banzaicloud.io/v1beta1
 kind: ClusterFlow
 metadata:
-  name: cf-core-com-api-dev
+  name: cf-app-channel-hmp-api-dev
   namespace: elastic-system
 spec:
   filters:
+    - grep:
+        regexp:
+          - key: full_filename
+            pattern: >-
+              /^\/hro\/nas_dev\/dev\/hro_app\/(channel-hmp-api-dev)\/log\/.*.log$/
     - detectExceptions:
-        multiline_flush_interval: '1'
-    - parser:
-        parse:
-          type: multi_format
-          patterns:
-          - format: regexp
-            expression: ^\[(?<date>\d{4}-\d{2}-\d{2}) (?<time>\d{2}:\d{2}:\d{2}:\d*)\] \[(?<stag>\S*)\] \[(?<thread>\S*)\]\s+(?<type>(INFO |WARN |ERROR|DEBUG))\s(?<logger>\S*)\s+\[(?<line>\d*)\]-\[(?<app>.*),(?<traceid>.*),(?<ptxid>.*)\]-(?<message>.*)
-        remove_key_name_field: true
-        reserve_time: true
+        languages:
+          - java
+        multiline_flush_interval: '3'
   globalOutputRefs:
-    - co-core-com-api-dev-es
-    - co-core-com-api-dev-s3
+    - co-app-channel-hmp-api-dev-es
+    - co-app-channel-hmp-api-dev-s3
+
+
+
+---
+
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterOutput
+metadata:
+  name: co-app-channel-hmp-api-prd-es
+  namespace: logging
+spec:
+  elasticsearch:
+    application_name: app-channel-hmp-api-prd
+    buffer:
+      timekey: 1m
+      timekey_use_utc: true
+      timekey_wait: 30s
+    data_stream_enable: true
+    data_stream_name: app-channel-hmp-api-prd-stream
+    enable_ilm: true
+    host: elastic.hello.co.kr
+    ilm_policy: >-
+      {"policy": {"phases": {"hot": {"min_age": "0ms","actions": {"rollover":
+      {"max_age": "50d","max_primary_shard_size": "50gb"},"set_priority":
+      {"priority": 100}}},"warm": {"min_age": "15d","actions": {"set_priority":
+      {"priority": 50}}},"cold": {"min_age": "30d","actions": {"set_priority":
+      {"priority": 0}}},"delete": {"min_age": "50d","actions": {"delete":
+      {"delete_searchable_snapshot": true}}}}}}
+    ilm_policy_id: hro-app-prd
+    include_timestamp: true
+    index_date_pattern: YYYY-MM-DD
+    index_name: app-channel-hmp-api-prd
+    logstash_format: false
+    password:
+      valueFrom:
+        secretKeyRef:
+          key: password
+          name: elasticsearch-master-credentials-dev
+    port: 443
+    rollover_index: true
+    scheme: https
+    ssl_verify: false
+    ssl_version: TLSv1_2
+    suppress_type_name: true
+    user: elastic
+    validate_client_version: true
+    verify_es_version_at_startup: true
