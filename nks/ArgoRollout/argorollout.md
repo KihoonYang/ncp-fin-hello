@@ -2,6 +2,8 @@
 
 ## Reference
 https://argo-rollouts.readthedocs.io/en/stable/installation/
+https://zayson.oopy.io/f12cf55c-f41c-4616-9e3f-d77e6358cd5e
+
 
 ## Install
 ```bash

@@ -49,17 +49,17 @@ spec:
             name: scouter-host-conf
         - name: hro-app
           nfs:
-            server: 169.254.0.xxx
-            path: /n0000000_nkshrod/hro/dev/hro_app
+            server: 169.254.0.20
+            path: /n3031818_nkshrod/hro/dev/hro_app
         - name: hro-ncrm-share
           nfs:
-            server: 169.254.0.xxx
-            path: /n0000000_nkshrod/hro/dev/hro_app/core-com-ncrm-dev/SHARE
+            server: 169.254.0.20
+            path: /n3031818_nkshrod/hro/dev/hro_app/core-com-ncrm-dev/SHARE
         - name: hro-attachment
           nfs:
-            server: 169.254.0.xxx
-            path: /n0000000_nkshrod/hro/dev/hro_attachment
-      terminationGracePeriodSeconds: 60
+            server: 169.254.0.20
+            path: /n3031818_nkshrod/hro/dev/hro_attachment
+      terminationGracePeriodSeconds: 80
       initContainers:
         - name: nas-init
           image: tbd5d1uh.private-ncr.fin-ntruss.com/busybox:latest
@@ -69,7 +69,7 @@ spec:
               mountPath: /hro_app
       containers:
         - name: core-com-api-dev
-          image: tbd5d1uh.private-ncr.fin-ntruss.com/app/dev/core/hro-com-backend:latest
+          image: hello.private-ncr.fin-ntruss.com/app/dev/core/hro-com-backend:latest
           imagePullPolicy: IfNotPresent
           securityContext:
             runAsUser: 2003
@@ -103,7 +103,7 @@ spec:
                 command: ["sh", "-c", "echo hro-application"]
             preStop:
               exec:
-                command: ["sh", "-c", "sleep 60;"]
+                command: ["sh", "-c", "sleep 20;"]
           volumeMounts:
             - name: scouter-agent-conf
               mountPath: /hro_app/sw/apm/scouter.conf
