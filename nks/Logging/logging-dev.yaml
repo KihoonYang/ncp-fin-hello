@@ -165,6 +165,7 @@ spec:
   elasticsearch:
     application_name: app-channel-hmp-api-prd
     buffer:
+      flush_thread_count: 8
       timekey: 1m
       timekey_use_utc: true
       timekey_wait: 30s
@@ -190,6 +191,7 @@ spec:
           key: password
           name: elasticsearch-master-credentials-dev
     port: 443
+    request_timeout: 30s
     rollover_index: true
     scheme: https
     ssl_verify: false
