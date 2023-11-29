@@ -1,0 +1,119 @@
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterOutput
+metadata:
+  name: co-pip-channel-mobile-backend-prd-es
+  namespace: elastic-system
+spec:
+  elasticsearch:
+    application_name: pip-channel-mobile-backend-prd
+    buffer:
+      flush_mode: immediate
+      flush_thread_count: 1
+      timekey: 1m
+      timekey_use_utc: true
+      timekey_wait: 60s
+    data_stream_enable: true
+    data_stream_name: pip-channel-mobile-backend-prd-stream
+    enable_ilm: true
+    host: elasticsearch-master.elastic-system.svc.cluster.local
+    include_timestamp: true
+    index_date_pattern: YYYY-MM-DD
+    index_name: pip-channel-mobile-backend-prd
+    logstash_format: false
+    password:
+      valueFrom:
+        secretKeyRef:
+          key: password
+          name: elasticsearch-master-credentials
+    port: 9200
+    request_timeout: 60s
+    rollover_index: true
+    scheme: https
+    ssl_verify: false
+    ssl_version: TLSv1_2
+    suppress_type_name: true
+    user: elastic
+    verify_es_version_at_startup: true
+
+---
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterOutput
+metadata:
+  name: co-pip-channel-mobile-backend-prd-s3
+  namespace: elastic-system
+spec:
+  s3:
+    aws_key_id:
+      valueFrom:
+        secretKeyRef:
+          key: access_key_id
+          name: s3-auth
+    aws_sec_key:
+      valueFrom:
+        secretKeyRef:
+          key: secret_access_key
+          name: s3-auth
+    buffer:
+      timekey: 1m
+      timekey_use_utc: true
+      timekey_wait: 30s
+    force_path_style: 'true'
+    path: '%Y/%m/%d/${tag}'
+    s3_bucket: hro-p-pip-channel-mobile-backend
+    s3_endpoint: https://kr.object.private.fin-ncloudstorage.com
+    s3_region: kr-standard
+
+---
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterFlow
+metadata:
+  name: cf-pip-channel-mobile-backend-prd
+  namespace: elastic-system
+spec:
+  filters:
+    - grep:
+        regexp:
+          - key: full_filename
+            pattern: >-
+              /^\/hro\/nas_dev\/prd\/hro_devops\/tekton\/(pl-app-channel-mobile-backend)-.*\/.*.log$/
+  globalOutputRefs:
+    - co-pip-channel-mobile-backend-prd-es
+    - co-pip-channel-mobile-backend-prd-s3
+
+---
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterFlow
+metadata:
+  name: cf-pip-channel-mobile-batch-prd
+  namespace: elastic-system
+spec:
+  filters:
+    - grep:
+        regexp:
+          - key: full_filename
+            pattern: >-
+              /^\/hro\/nas_dev\/prd\/hro_devops\/tekton\/(pl-app-channel-mobile-batch)-.*\/.*.log$/
+  globalOutputRefs:
+    - co-pip-channel-mobile-batch-prd-es
+    - co-pip-channel-mobile-batch-prd-s3
+
+---
+
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: ClusterFlow
+metadata:
+  name: cf-pip-channel-mobile-frontend-prd
+  namespace: elastic-system
+spec:
+  filters:
+    - grep:
+        regexp:
+          - key: full_filename
+            pattern: >-
+              /^\/hro\/nas_dev\/prd\/hro_devops\/tekton\/(pl-app-channel-mobile-frontend-deploy)\/.*.log$/
+  globalOutputRefs:
+    - co-pip-channel-mobile-frontend-prd-es
+    - co-pip-channel-mobile-frontend-prd-s3
