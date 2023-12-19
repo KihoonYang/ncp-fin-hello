@@ -27,7 +27,7 @@ spec:
           containers:
             - name: sw-log-s3-backup
               image: >-
-                tbd5d1uh.private-ncr.fin-ntruss.com/k8s/dev/devops/awscli:1.15.85-5
+                tbd5d100.private-ncr.fin-ntruss.com/k8s/dev/devops/awscli:1.15.85-5
               command:
                 - /home/devops/works/run-backup.sh
               env:

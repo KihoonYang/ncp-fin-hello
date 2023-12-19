@@ -1,134 +1,56 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: core-com-api-dev
-  namespace: ns-app-core-dev
+  labels:
+    app.kubernetes.io/instance: core-com-api-prd
+    stage: prd
+  name: core-com-api-prd
+  namespace: ns-app-core-prd
 spec:
-#  replicas: 0
+  replicas: 4
   revisionHistoryLimit: 3
   selector:
     matchLabels:
-      hro: core-com-api-dev
-      stage: dev
+      hro: core-com-api-prd
+      stage: prd
+  strategy:
+    canary:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
-      labels:
-        hro: core-com-api-dev
-        stage: dev
-        tier: backend
       annotations:
-        sidecar.istio.io/rewriteAppHTTPProbers: "true"
-        sidecar.istio.io/inject: 'true'
-        sidecar.istio.io/proxyCPU: '100m'
-        sidecar.istio.io/proxyMemory: '256Mi'
-        sidecar.istio.io/proxyCPULimit: '150m'
-        sidecar.istio.io/proxyMemoryLimit: '256Mi'
         proxy.istio.io/config: |
           holdApplicationUntilProxyStarts: true
+        sidecar.istio.io/inject: 'true'
+        sidecar.istio.io/proxyCPU: 250m
+        sidecar.istio.io/proxyMemory: 300Mi
+        sidecar.istio.io/proxyMemoryLimit: 300Mi
+        sidecar.istio.io/rewriteAppHTTPProbers: 'true'
+      labels:
+        gitrevision: 2bf3ef8050ccd34a4e64944506d198a72eb930f6
+        hro: core-com-api-prd
+        stage: prd
+        tier: backend
     spec:
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: hro
-                  operator: In
-                  values:
-                  - core-com-api-dev
-              topologyKey: "kubernetes.io/hostname"
-      imagePullSecrets:
-        - name: hero-reg
-      volumes:
-        - name: scouter-agent-conf
-          configMap:
-            name: scouter-agent-conf
-        - name: scouter-host-conf
-          configMap:
-            name: scouter-host-conf
-        - name: hro-app
-          nfs:
-            server: 169.254.0.20
-            path: /n3031818_nkshrod/hro/dev/hro_app
-        - name: hro-ncrm-share
-          nfs:
-            server: 169.254.0.20
-            path: /n3031818_nkshrod/hro/dev/hro_app/core-com-ncrm-dev/SHARE
-        - name: hro-attachment
-          nfs:
-            server: 169.254.0.20
-            path: /n3031818_nkshrod/hro/dev/hro_attachment
-      terminationGracePeriodSeconds: 80
-      initContainers:
-        - name: nas-init
-          image: tbd5d1uh.private-ncr.fin-ntruss.com/busybox:latest
-          command: ["bin/sh", "-c", "chown -R 2003:2000 /hro_app;"]
-          volumeMounts:
-            - name: hro-app
-              mountPath: /hro_app
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: hro
+                      operator: In
+                      values:
+                        - core-com-api-prd
+                topologyKey: kubernetes.io/hostname
+              weight: 100
       containers:
-        - name: core-com-api-dev
-          image: hello.private-ncr.fin-ntruss.com/app/dev/core/hro-com-backend:latest
-          imagePullPolicy: IfNotPresent
-          securityContext:
-            runAsUser: 2003
-            privileged: false
-            allowPrivilegeEscalation: false
-            runAsNonRoot: true
-          resources:
-            requests:
-              memory: "1Gi"
-              cpu: "300m"
-            limits:
-              memory: "1Gi"
-#              cpu: "500m"
-          livenessProbe:
-            httpGet:
-              path: /com/api/health/liveness
-              port: 8070
-            initialDelaySeconds: 150
-            periodSeconds: 10
-            timeoutSeconds: 5
-          readinessProbe:
-            httpGet:
-              path: /com/api/health/readiness
-              port: 8070
-            initialDelaySeconds: 150
-            periodSeconds: 10
-            timeoutSeconds: 5
-          lifecycle:
-            postStart:
-              exec:
-                command: ["sh", "-c", "echo hro-application"]
-            preStop:
-              exec:
-                command: ["sh", "-c", "sleep 20;"]
-          volumeMounts:
-            - name: scouter-agent-conf
-              mountPath: /hro_app/sw/apm/scouter.conf
-              subPath: scouter.conf
-              readOnly: true
-            - name: scouter-host-conf
-              mountPath: /usr/local/scouter/agent.host/conf/scouter.conf
-              subPath: scouter.conf
-              readOnly: true
-            - name: hro-app
-              mountPath: /hro_app/
-            - name: hro-attachment
-              mountPath: /hro_attachment/
-            - name: hro-ncrm-share
-              mountPath: /hro_ncrm_share/
-          envFrom:
-            - secretRef:
-                name: scr-core-fwk-dev
-            - secretRef:
-                name: scr-core-com-dev
-          env:
+        - env:
             - name: TZ
               value: Asia/Seoul
             - name: SPRING_PROFILES_ACTIVE
-              value: dev,redis
+              value: prd,redis
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -150,14 +72,97 @@ spec:
                 -Dadd-opensjava.base/java.lang=ALL-UNNAMED
                 -Djdk.attach.allowAttachSelf=true
                 -javaagent:/hro_app/sw/apm/pinpoint/2.5.2/pinpoint-bootstrap-2.5.2.jar
-                -Dpinpoint.applicationName=core-com-api-dev
-                -Dpinpoint.agentName=core-com-api-dev
+                -Dpinpoint.applicationName=core-com-api-prd
+                -Dpinpoint.agentName=core-com-api-prd
                 -Dpinpoint.agentId=$(WORKLOAD_NAME)-$(POD_IP)
-                -XX:+UseContainerSupport
-                -XX:InitialRAMPercentage=50.0
-                -XX:MinRAMPercentage=50.0
-                -XX:MaxRAMPercentage=70.0
-  strategy:
-    canary:
-      maxSurge: 25%
-      maxUnavailable: 0
+                -XX:+UseContainerSupport -XX:InitialRAMPercentage=50.0
+                -XX:MinRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
+          envFrom:
+            - secretRef:
+                name: scr-core-fwk-prd
+            - secretRef:
+                name: scr-core-com-prd
+          image: >-
+            tbd5d100.private-ncr.fin-ntruss.com/app/prd/core/hro-com-backend:prd-231218-115209-440f41dc
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - sh
+                  - '-c'
+                  - echo hro-application;
+            preStop:
+              exec:
+                command:
+                  - sh
+                  - '-c'
+                  - sleep 20;
+          livenessProbe:
+            httpGet:
+              path: /com/api/health/liveness
+              port: 8090
+            initialDelaySeconds: 150
+            periodSeconds: 10
+            timeoutSeconds: 5
+          name: core-com-api-prd
+          readinessProbe:
+            httpGet:
+              path: /com/api/health/readiness
+              port: 8090
+            initialDelaySeconds: 150
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            runAsGroup: 2000
+            runAsNonRoot: true
+            runAsUser: 2003
+          volumeMounts:
+            - mountPath: /hro_app/sw/apm/scouter.conf
+              name: scouter-agent-conf
+              readOnly: true
+              subPath: scouter.conf
+            - mountPath: /hro_app/
+              name: hro-app
+            - mountPath: /hro_attachment/
+              name: hro-attachment
+            - mountPath: /hro_ncrm_share/
+              name: hro-ncrm-share
+      imagePullSecrets:
+        - name: hero-reg
+      initContainers:
+        - command:
+            - bin/sh
+            - '-c'
+            - chown -R 2003:2000 /hro_ncrm_share/scan/;
+          image: tbd5d100.private-ncr.fin-ntruss.com/busybox:latest
+          name: nas-init
+          resources: {}
+          volumeMounts:
+            - mountPath: /hro_ncrm_share
+              name: hro-ncrm-share
+      terminationGracePeriodSeconds: 80
+      volumes:
+        - configMap:
+            name: scouter-agent-conf
+          name: scouter-agent-conf
+        - name: hro-app
+          nfs:
+            path: /n3031800_nkshrop/hro/prd/hro_app
+            server: 169.254.0.00
+        - name: hro-ncrm-share
+          nfs:
+            path: /n3031800_nkshrop/hro/prd/hro_app/core-com-ncrm-prd/SHARE
+            server: 169.254.0.00
+        - name: hro-attachment
+          nfs:
+            path: /n3031800_nkshrop/hro/prd/hro_attachment
+            server: 169.254.0.00
